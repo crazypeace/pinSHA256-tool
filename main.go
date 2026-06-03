@@ -51,14 +51,12 @@ func main() {
 		leaf.NotAfter.Format("2006-01-02"),
 	)
 
-	spki := leaf.RawSubjectPublicKeyInfo
-	hash := sha256.Sum256(spki)
-	pin := base64.StdEncoding.EncodeToString(hash[:])
+	certDER := leaf.Raw
+	hash := sha256.Sum256(certDER)
 	pinHex := fmt.Sprintf("%x", hash)
+	pinB64 := base64.StdEncoding.EncodeToString(hash[:])
 
-	fmt.Printf("  pinSHA256 (base64): %s\n", pin)
 	fmt.Printf("  pinSHA256 (hex)   : %s\n", pinHex)
-	fmt.Printf("\n客户端配置（YAML）:\n")
-	fmt.Printf("  tls:\n")
-	fmt.Printf("    pinSHA256: \"%s\"\n", pin)
+	fmt.Printf("  pinSHA256 (base64): %s\n", pinB64)
+
 }
