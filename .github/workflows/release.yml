@@ -13,15 +13,33 @@ jobs:
     strategy:
       matrix:
         include:
-          - goos: windows
-            goarch: amd64
-            suffix: .exe
+          # Linux
           - goos: linux
             goarch: amd64
             suffix: ""
           - goos: linux
             goarch: arm64
             suffix: ""
+          - goos: linux
+            goarch: loong64
+            suffix: ""
+          - goos: linux
+            goarch: riscv64
+            suffix: ""
+          # macOS
+          - goos: darwin
+            goarch: amd64
+            suffix: ""
+          - goos: darwin
+            goarch: arm64
+            suffix: ""
+          # Windows
+          - goos: windows
+            goarch: amd64
+            suffix: .exe
+          - goos: windows
+            goarch: arm64
+            suffix: .exe
 
     steps:
       - name: Checkout
@@ -30,7 +48,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.21'
+          go-version: '1.22'
 
       - name: Build
         env:
