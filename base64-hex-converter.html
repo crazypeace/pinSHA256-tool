@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Base64 ↔ Hex 转换器</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0d1117;
+    color: #c9d1d9;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 40px 20px;
+  }
+  h1 {
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin-bottom: 8px;
+    background: linear-gradient(135deg, #58a6ff, #bc8cff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .subtitle {
+    color: #8b949e;
+    font-size: 0.9rem;
+    margin-bottom: 32px;
+  }
+  .container {
+    width: 100%;
+    max-width: 720px;
+  }
+  .converter {
+    background: #161b22;
+    border: 1px solid #30363d;
+    border-radius: 12px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .direction {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .direction-label {
+    font-size: 0.85rem;
+    color: #8b949e;
+    white-space: nowrap;
+  }
+  .swap-btn {
+    background: #21262d;
+    border: 1px solid #30363d;
+    color: #58a6ff;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1.1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .swap-btn:hover {
+    background: #30363d;
+    border-color: #58a6ff;
+  }
+  .field {
+    margin-bottom: 16px;
+  }
+  .field label {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: #8b949e;
+    margin-bottom: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  .field label .tag {
+    font-size: 0.7rem;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  .tag-b64 { background: #1f3a5f; color: #58a6ff; }
+  .tag-hex { background: #2d1f4e; color: #bc8cff; }
+  textarea {
+    width: 100%;
+    background: #0d1117;
+    border: 1px solid #30363d;
+    border-radius: 8px;
+    color: #c9d1d9;
+    font-family: 'SF Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 0.95rem;
+    padding: 12px 14px;
+    resize: vertical;
+    min-height: 80px;
+    line-height: 1.5;
+    transition: border-color 0.2s;
+  }
+  textarea:focus {
+    outline: none;
+    border-color: #58a6ff;
+    box-shadow: 0 0 0 3px rgba(88,166,255,0.1);
+  }
+  textarea.error {
+    border-color: #f85149;
+    box-shadow: 0 0 0 3px rgba(248,81,73,0.1);
+  }
+  .btn-row {
+    display: flex;
+    gap: 8px;
+  }
+  .btn {
+    flex: 1;
+    padding: 10px 16px;
+    border-radius: 8px;
+    border: 1px solid #30363d;
+    background: #21262d;
+    color: #c9d1d9;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .btn:hover {
+    background: #30363d;
+    border-color: #484f58;
+  }
+  .btn:active {
+    transform: scale(0.98);
+  }
+  .btn.primary {
+    background: #238636;
+    border-color: #2ea043;
+    color: #fff;
+  }
+  .btn.primary:hover {
+    background: #2ea043;
+  }
+  .btn.danger {
+    color: #f85149;
+  }
+  .btn.danger:hover {
+    background: #da3633;
+    border-color: #da3633;
+    color: #fff;
+  }
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: #238636;
+    color: #fff;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    opacity: 0;
+    transition: all 0.3s ease;
+    pointer-events: none;
+    z-index: 100;
+  }
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+  .error-msg {
+    color: #f85149;
+    font-size: 0.8rem;
+    margin-top: 6px;
+    min-height: 1.2em;
+  }
+  .info-bar {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: #484f58;
+    margin-top: 6px;
+  }
+  .drop-zone {
+    border: 2px dashed #30363d;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    color: #484f58;
+    font-size: 0.85rem;
+    transition: all 0.2s;
+    cursor: pointer;
+    margin-bottom: 16px;
+  }
+  .drop-zone:hover, .drop-zone.dragover {
+    border-color: #58a6ff;
+    color: #58a6ff;
+    background: rgba(88,166,255,0.05);
+  }
+  .drop-zone input { display: none; }
+</style>
+</head>
+<body>
+
+<h1>Base64 ↔ Hex 转换器</h1>
+<p class="subtitle">在线双向转换，支持文本和二进制数据</p>
+
+<div class="container">
+  <div class="converter">
+    <div class="direction">
+      <span class="direction-label" id="dirLabel">Base64 → Hex</span>
+      <button class="swap-btn" onclick="swapDirection()" title="切换方向">⇅</button>
+    </div>
+
+    <div class="field">
+      <label>
+        <span id="inputLabel">输入 Base64</span>
+        <span class="tag tag-b64" id="inputTag">BASE64</span>
+      </label>
+      <textarea id="input" placeholder="粘贴 Base64 字符串..." spellcheck="false"
+        oninput="convert()"></textarea>
+      <div class="error-msg" id="inputErr"></div>
+      <div class="info-bar">
+        <span id="inputInfo">0 字符</span>
+        <span id="inputBytes">0 字节</span>
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn primary" onclick="convert()">⇅ 转换</button>
+      <button class="btn" onclick="copyOutput()">📋 复制结果</button>
+      <button class="btn danger" onclick="clearAll()">✕ 清空</button>
+    </div>
+
+    <div class="field" style="margin-top:16px">
+      <label>
+        <span id="outputLabel">输出 Hex</span>
+        <span class="tag tag-hex" id="outputTag">HEX</span>
+      </label>
+      <textarea id="output" placeholder="转换结果..." readonly spellcheck="false"></textarea>
+      <div class="info-bar">
+        <span id="outputInfo">0 字符</span>
+        <span id="outputBytes">0 字节</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+    📎 拖拽文件到此处，或点击选择文件（将读取文件内容进行转换）
+    <input type="file" id="fileInput" onchange="handleFile(this.files)">
+  </div>
+</div>
+
+<div class="toast" id="toast">已复制到剪贴板</div>
+
+<script>
+let direction = 'b2h'; // b2h = base64→hex, h2b = hex→base64
+
+function swapDirection() {
+  direction = direction === 'b2h' ? 'h2b' : 'b2h';
+  const input = document.getElementById('input');
+  const output = document.getElementById('output');
+
+  // Swap values
+  const tmp = input.value;
+  input.value = output.value;
+  output.value = tmp;
+
+  updateLabels();
+  convert();
+}
+
+function updateLabels() {
+  const isB2H = direction === 'b2h';
+  document.getElementById('dirLabel').textContent = isB2H ? 'Base64 → Hex' : 'Hex → Base64';
+  document.getElementById('inputLabel').textContent = isB2H ? '输入 Base64' : '输入 Hex';
+  document.getElementById('outputLabel').textContent = isB2H ? '输出 Hex' : '输出 Base64';
+  document.getElementById('inputTag').textContent = isB2H ? 'BASE64' : 'HEX';
+  document.getElementById('inputTag').className = 'tag ' + (isB2H ? 'tag-b64' : 'tag-hex');
+  document.getElementById('outputTag').textContent = isB2H ? 'HEX' : 'BASE64';
+  document.getElementById('outputTag').className = 'tag ' + (isB2H ? 'tag-hex' : 'tag-b64');
+  document.getElementById('input').placeholder = isB2H ? '粘贴 Base64 字符串...' : '粘贴 Hex 字符串...';
+  document.getElementById('output').placeholder = '转换结果...';
+}
+
+function convert() {
+  const input = document.getElementById('input');
+  const output = document.getElementById('output');
+  const errEl = document.getElementById('inputErr');
+  const val = input.value.trim();
+
+  errEl.textContent = '';
+  input.classList.remove('error');
+
+  if (!val) {
+    output.value = '';
+    updateInfo('input', '');
+    updateInfo('output', '');
+    return;
+  }
+
+  updateInfo('input', val);
+
+  try {
+    let result;
+    if (direction === 'b2h') {
+      result = b64ToHex(val);
+    } else {
+      result = hexToB64(val);
+    }
+    output.value = result;
+    updateInfo('output', result);
+  } catch (e) {
+    errEl.textContent = '❌ ' + e.message;
+    input.classList.add('error');
+    output.value = '';
+    updateInfo('output', '');
+  }
+}
+
+function b64ToHex(b64) {
+  // Validate base64
+  if (!/^[A-Za-z0-9+/=\s]+$/.test(b64)) {
+    throw new Error('输入包含非法 Base64 字符');
+  }
+  // Remove whitespace
+  b64 = b64.replace(/\s/g, '');
+  // Check padding
+  if (b64.length % 4 !== 0 && !b64.endsWith('=')) {
+    // Some base64 without padding, try to fix
+    const pad = 4 - (b64.length % 4);
+    if (pad < 4) b64 += '='.repeat(pad);
+  }
+
+  const raw = atob(b64);
+  let hex = '';
+  for (let i = 0; i < raw.length; i++) {
+    hex += raw.charCodeAt(i).toString(16).padStart(2, '0');
+  }
+  return hex;
+}
+
+function hexToB64(hex) {
+  // Remove whitespace, 0x prefix, colons, dashes
+  hex = hex.replace(/[\sxX:;,\-]/g, '');
+
+  // Validate hex
+  if (!/^[0-9a-fA-F]*$/.test(hex)) {
+    throw new Error('输入包含非法 Hex 字符');
+  }
+  if (hex.length % 2 !== 0) {
+    throw new Error('Hex 字符串长度必须为偶数（当前 ' + hex.length + ' 字符）');
+  }
+  if (hex.length === 0) {
+    throw new Error('Hex 字符串不能为空');
+  }
+
+  // Use Uint8Array to avoid String.fromCharCode encoding issues
+  const bytes = new Uint8Array(hex.length / 2);
+  for (let i = 0; i < hex.length; i += 2) {
+    bytes[i / 2] = parseInt(hex.substr(i, 2), 16);
+  }
+  // Binary → Base64 via Uint8Array
+  let binary = '';
+  for (let i = 0; i < bytes.length; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
+
+function updateInfo(prefix, val) {
+  const charCount = val.length;
+  // Estimate byte length
+  let byteLen;
+  if (prefix === 'input') {
+    if (direction === 'b2h') {
+      // base64 byte estimate
+      const clean = val.replace(/\s/g, '');
+      byteLen = Math.floor(clean.length * 3 / 4) - (clean.endsWith('==') ? 2 : clean.endsWith('=') ? 1 : 0);
+      if (byteLen < 0) byteLen = 0;
+    } else {
+      byteLen = val.replace(/[\s0xX]/g, '').length / 2;
+    }
+  } else {
+    if (direction === 'b2h') {
+      byteLen = val.length / 2;
+    } else {
+      byteLen = Math.floor(val.length * 3 / 4);
+    }
+  }
+
+  document.getElementById(prefix + 'Info').textContent = charCount + ' 字符';
+  document.getElementById(prefix + 'Bytes').textContent = byteLen + ' 字节';
+}
+
+async function copyOutput() {
+  const val = document.getElementById('output').value;
+  if (!val) return;
+  try {
+    await navigator.clipboard.writeText(val);
+    showToast('已复制到剪贴板');
+  } catch {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = val;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    showToast('已复制到剪贴板');
+  }
+}
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1500);
+}
+
+function clearAll() {
+  document.getElementById('input').value = '';
+  document.getElementById('output').value = '';
+  document.getElementById('inputErr').textContent = '';
+  document.getElementById('input').classList.remove('error');
+  updateInfo('input', '');
+  updateInfo('output', '');
+}
+
+// File drop support
+const dropZone = document.getElementById('dropZone');
+
+dropZone.addEventListener('dragover', e => {
+  e.preventDefault();
+  dropZone.classList.add('dragover');
+});
+dropZone.addEventListener('dragleave', () => {
+  dropZone.classList.remove('dragover');
+});
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files);
+});
+
+function handleFile(files) {
+  const file = files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const bytes = new Uint8Array(reader.result);
+    // Convert bytes to hex
+    let hex = '';
+    for (let i = 0; i < bytes.length; i++) {
+      hex += bytes[i].toString(16).padStart(2, '0');
+    }
+    document.getElementById('input').value = hex;
+    // Switch to hex→base64 mode
+    if (direction !== 'h2b') {
+      direction = 'h2b';
+      updateLabels();
+    }
+    convert();
+    showToast(`已读取 ${file.name}（${bytes.length} 字节）`);
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+// Init
+updateLabels();
+</script>
+</body>
+</html>
