@@ -1,0 +1,13 @@
+# 编译产物
+hy2-pin-tool
+hy2-pin-tool-linux
+hy2-pin-tool-win.exe
+hy2-pin-tool.exe
+
+# Go 编译缓存
+*.exe
+*.test
+*.out
+
+# 依赖目录
+vendor/
