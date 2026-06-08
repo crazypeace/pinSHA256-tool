@@ -48,7 +48,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v5
         with:
-          go-version: '1.22'
+          go-version: '1.25'
 
       - name: Build
         env:
@@ -56,10 +56,10 @@ jobs:
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: 0
         run: |
-          BINARY_NAME="hy2-pin-tool-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.suffix }}"
+          BINARY_NAME="pinsha256-tool-${{ matrix.goos }}-${{ matrix.goarch }}${{ matrix.suffix }}"
           go build -ldflags="-s -w" -o "${BINARY_NAME}" .
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v2
         with:
-          files: hy2-pin-tool-*
+          files: pinsha256-tool-*
